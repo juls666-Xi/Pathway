@@ -2,20 +2,32 @@
 
 A Next.js student-portal MVP backed by PostgreSQL and Prisma. The current dashboard uses clearly labeled preview data; it does not yet read from or write to the database.
 
-## Start locally
+## Use Supabase
 
-Requirements: Node.js 20.9 or newer and Docker Compose.
+Create a Supabase project, then open **Connect** in its dashboard to get the connection details. Copy the transaction-pooler URI into `DATABASE_URL` and the direct database URI into `DIRECT_URL` in `.env`. Replace the project reference, region, and password placeholders; append `pgbouncer=true&connection_limit=1&sslmode=require` to the pooled URI if those options are not already present.
+
+Requirements: Node.js 20.9 or newer.
 
 ```bash
 cp .env.example .env
-docker compose up -d db
 npm install
 npm run db:generate
 npm run db:migrate -- --name init
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Prisma Studio is available with `npm run db:studio`. Stop the local database with `docker compose down`.
+Open [http://localhost:3000](http://localhost:3000). Prisma Studio is available with `npm run db:studio`. Prisma uses the pooled URL for application connections and the direct URL for migrations.
+
+### Use local PostgreSQL instead
+
+For local development without Supabase, uncomment the local `DATABASE_URL` and `DIRECT_URL` values in `.env.example`, comment out the Supabase values, and start the Docker database before migrating:
+
+```bash
+docker compose up -d db
+npm run db:migrate -- --name init
+```
+
+Stop it with `docker compose down`.
 
 ## MVP plan
 
