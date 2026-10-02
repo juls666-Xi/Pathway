@@ -8,6 +8,10 @@ import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 
 const resolveIdentity = cache(async () => {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    return null;
+  }
+
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getUser();
 

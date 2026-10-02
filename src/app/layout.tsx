@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "San Bartolome High School | Student Portal",
-  description: "A learning space for San Bartolome High School students.",
+  title: "San Bartolome High School",
+  description: "Public school information and secure learning portals for the San Bartolome High School community.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
