@@ -11,6 +11,7 @@ datasource db {
 enum UserRole {
   STUDENT
   TEACHER
+  STAFF
   ADMIN
 }
 
@@ -22,14 +23,27 @@ enum SubmissionStatus {
 }
 
 model User {
-  id          String       @id @default(cuid())
-  email       String       @unique
-  name        String
-  role        UserRole     @default(STUDENT)
-  createdAt   DateTime     @default(now())
-  enrollments Enrollment[]
-  taught      Course[]     @relation("CourseTeacher")
-  submissions Submission[]
+  id             String           @id @default(cuid())
+  authUserId     String?          @unique
+  email          String           @unique
+  name           String
+  role           UserRole         @default(STUDENT)
+  active         Boolean          @default(true)
+  createdAt      DateTime         @default(now())
+  enrollments    Enrollment[]
+  taught         Course[]         @relation("CourseTeacher")
+  submissions    Submission[]
+  permissions    UserPermission[]
+}
+
+model UserPermission {
+  id         String   @id @default(cuid())
+  userId     String
+  permission String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, permission])
+  @@index([permission])
 }
 
 model Course {

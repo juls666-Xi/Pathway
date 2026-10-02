@@ -1,28 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
-  ArrowRight,
   AtSign,
   BookOpen,
   Eye,
   EyeOff,
   GraduationCap,
   LockKeyhole,
-  ShieldCheck,
 } from "lucide-react";
 import styles from "./login.module.css";
+import { login } from "./actions";
 
 export default function LoginPage() {
-  const router = useRouter();
+  const [state, action, pending] = useActionState(login, undefined);
   const [showPassword, setShowPassword] = useState(false);
-
-  function enterPreview(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    router.push("/");
-  }
 
   return (
     <main className={styles.loginShell}>
@@ -55,23 +48,18 @@ export default function LoginPage() {
           <h2 id="login-heading">Sign in to continue</h2>
           <p className={styles.formIntro}>Use your school account to enter the learning portal.</p>
 
-          <div className={styles.previewNotice} role="note">
-            <ShieldCheck size={19} />
-            <span><strong>Preview access</strong><small>School sign-in is not connected yet.</small></span>
-          </div>
-
-          <form className={styles.loginForm} onSubmit={enterPreview}>
+          <form className={styles.loginForm} action={action}>
             <label htmlFor="email">School email</label>
-            <span className={styles.inputWrap}><AtSign size={17} /><input id="email" name="email" type="email" autoComplete="username" placeholder="name@sanbartolome.edu.ph" required /></span>
+            <span className={styles.inputWrap}><AtSign size={17} /><input id="email" name="email" type="email" autoComplete="username" placeholder="name@school.edu" required /></span>
 
             <div className={styles.passwordLabel}><label htmlFor="password">Password</label><span>School account</span></div>
             <span className={styles.inputWrap}><LockKeyhole size={17} /><input id="password" name="password" type={showPassword ? "text" : "password"} autoComplete="current-password" placeholder="Enter your password" required /><button className={styles.revealButton} type="button" aria-label={showPassword ? "Hide password" : "Show password"} onClick={() => setShowPassword((visible) => !visible)}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></span>
 
-            <button className={styles.submitButton} type="submit">Continue to portal <ArrowRight size={17} /></button>
+            <button className={styles.submitButton} type="submit" disabled={pending}>{pending ? "Signing in…" : "Continue to portal"}</button>
           </form>
 
-          <p className={styles.previewDisclaimer}>Preview only. Form entries are not checked, saved, or sent anywhere.</p>
-          <div className={styles.formFooter}><span>Need help accessing your account?</span><button type="button" onClick={() => window.alert("Please contact your class adviser for portal support.")}>Contact your adviser</button></div>
+          {state?.message && <p className={styles.formMessage} role="alert">{state.message}</p>}
+          <div className={styles.formFooter}><span>Need help accessing your account? Contact the school office.</span></div>
         </div>
         <p className={styles.legalNote}>For San Bartolome High School students and staff</p>
       </section>

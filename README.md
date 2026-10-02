@@ -1,10 +1,10 @@
 # San Bartolome High School LMS
 
-A Next.js student-portal MVP backed by PostgreSQL and Prisma. The current dashboard uses clearly labeled preview data; it does not yet read from or write to the database.
+A Next.js school portal backed by Supabase Auth, PostgreSQL, and Prisma. The public homepage is open to everyone; role dashboards and their sections are server-protected.
 
 ## Use Supabase
 
-Create a Supabase project, then open **Connect** in its dashboard to get the connection details. Copy the transaction-pooler URI into `DATABASE_URL` and the direct database URI into `DIRECT_URL` in `.env`. Replace the project reference, region, and password placeholders; append `pgbouncer=true&connection_limit=1&sslmode=require` to the pooled URI if those options are not already present.
+Create a Supabase project. In **Project Settings → API**, copy the project URL and anon key into `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`. These are the project URL and anon key, not a service-role key. In **Connect**, copy the transaction-pooler URI into `DATABASE_URL` and the direct database URI into `DIRECT_URL` in `.env`. Replace the project reference, region, and password placeholders; URL-encode special characters in the database password.
 
 Requirements: Node.js 20.9 or newer.
 
@@ -18,6 +18,10 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000). Prisma Studio is available with `npm run db:studio`. Prisma uses the pooled URL for application connections and the direct URL for migrations.
 
+In Supabase Auth, disable public sign-ups and invite school accounts through an approved process. After the Prisma migration, provision a matching `User` row for each invited account with its Supabase Auth UUID in `authUserId`, its email, name, assigned role, and `active: true`. The server rejects authenticated identities without an active matching row. Do not store roles in Supabase user metadata. Grant staff access by creating `UserPermission` rows with permission codes such as `ANNOUNCEMENTS_MANAGE`, `STUDENT_RECORDS_READ`, or `OPERATIONS_ACCESS`; administrator accounts bypass those staff-specific grants. Use Prisma Studio only with approved administrator access.
+
+Protected routes are `/student`, `/teacher`, `/staff`, and `/admin`; the server checks the database role on every dashboard and section request. Staff section permissions are checked again on the server. `/api/auth/me` is also authenticated. Add the same `authorizeApiRequest`, `requireRole`, or `requirePermission` checks to every future route handler or server action before it reads or changes records. The current section pages are protected scaffolding; course, grade, attendance, announcement, and administration data workflows still need implementation. Public announcements are sample copy and should be replaced with school-approved content before deployment.
+
 ### Use local PostgreSQL instead
 
 For local development without Supabase, uncomment the local `DATABASE_URL` and `DIRECT_URL` values in `.env.example`, comment out the Supabase values, and start the Docker database before migrating:
@@ -29,15 +33,12 @@ npm run db:migrate -- --name init
 
 Stop it with `docker compose down`.
 
-## MVP plan
+## Current scope
 
-1. Student portal: course overview, upcoming assignments, submission and grades views. The current interface is a navigable prototype with sample content.
-2. Persisted learning workflow: connect the portal to PostgreSQL, save assignment submissions, and load grades and courses from the database.
-3. Teacher workspace: manage classes, publish assignments, review submissions, and provide feedback.
-4. School operations: approved sign-in, role-based access, roster import, auditability, backups, and deployment.
+The public homepage contains school-wide information only. Role-specific links are generated from server-verified account roles; staff links are filtered by assigned permissions. Supabase sessions are refreshed in `src/proxy.ts`, while data-access authorization lives in server-only helpers in `src/lib/auth.ts`.
 
 The Prisma schema in `prisma/schema.prisma` defines users, teacher-owned courses, student enrollments, assignments, and submissions. Create schema changes as migrations; do not edit a deployed database directly.
 
 ## Student-data safeguard
 
-Use preview data only until the school approves its identity provider, access policies, hosting region, data-retention rules, and backup process. Do not add real student records or credentials to this prototype. Before production, add authentication and enforce authorization on the server for every student and teacher data request.
+Before production, the school must approve its identity provider, account-provisioning process, hosting region, data-retention rules, permission policy, and backup process. Do not add real student records or credentials until those controls and the remaining data workflows have been reviewed.
