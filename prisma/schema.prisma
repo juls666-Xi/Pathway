@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  STUDENT
+  TEACHER
+  ADMIN
+}
+
+enum SubmissionStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  SUBMITTED
+  GRADED
+}
+
+model User {
+  id          String       @id @default(cuid())
+  email       String       @unique
+  name        String
+  role        UserRole     @default(STUDENT)
+  createdAt   DateTime     @default(now())
+  enrollments Enrollment[]
+  taught      Course[]     @relation("CourseTeacher")
+  submissions Submission[]
+}
+
+model Course {
+  id          String       @id @default(cuid())
+  code        String
+  name        String
+  section     String
+  color       String       @default("green")
+  teacherId   String
+  teacher     User         @relation("CourseTeacher", fields: [teacherId], references: [id], onDelete: Restrict)
+  enrollments Enrollment[]
+  assignments Assignment[]
+  createdAt   DateTime     @default(now())
+
+  @@unique([code, section])
+  @@index([teacherId])
+}
+
+model Enrollment {
+  studentId  String
+  courseId   String
+  enrolledAt DateTime @default(now())
+  student    User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@id([studentId, courseId])
+  @@index([courseId])
+}
+
+model Assignment {
+  id           String       @id @default(cuid())
+  courseId     String
+  title        String
+  instructions String?
+  dueAt        DateTime
+  points       Int          @default(100)
+  createdAt    DateTime     @default(now())
+  course       Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  submissions  Submission[]
+
+  @@index([courseId, dueAt])
+}
+
+model Submission {
+  id           String           @id @default(cuid())
+  assignmentId String
+  studentId    String
+  content      String?
+  status       SubmissionStatus @default(NOT_STARTED)
+  submittedAt  DateTime?
+  score        Float?
+  feedback     String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  assignment   Assignment       @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  student      User             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([assignmentId, studentId])
+  @@index([studentId, status])
+}
