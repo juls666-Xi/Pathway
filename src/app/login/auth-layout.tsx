@@ -14,7 +14,7 @@ export function AuthLayout({ kicker, title, description, children }: AuthLayoutP
   return (
     <main className={styles.loginShell}>
       <section className={styles.welcomePanel}>
-        <Link className={styles.brand} href="/" aria-label="San Bartolome High School home">
+        <Link className={styles.brand} href="/login" aria-label="San Bartolome High School sign in">
           <span className={styles.brandMark}><GraduationCap size={23} /></span>
           <span className={styles.brandCopy}><strong>San Bartolome</strong><small>HIGH SCHOOL</small></span>
         </Link>

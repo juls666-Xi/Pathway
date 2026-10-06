@@ -4,7 +4,13 @@ import { NextResponse, type NextRequest } from "next/server";
 export async function proxy(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const pathname = request.nextUrl.pathname;
+  const isPublicAuthRoute = pathname === "/login"
+    || pathname.startsWith("/login/")
+    || pathname === "/auth/callback";
+  const isApiRoute = pathname === "/api" || pathname.startsWith("/api/");
   let response = NextResponse.next({ request });
+  let authenticated = false;
 
   if (supabaseUrl && supabaseAnonKey) {
     const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
@@ -18,7 +24,20 @@ export async function proxy(request: NextRequest) {
       },
     });
 
-    await supabase.auth.getUser();
+    const { data } = await supabase.auth.getUser();
+    authenticated = Boolean(data.user);
+  }
+
+  if (!authenticated && !isPublicAuthRoute && !isApiRoute) {
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = "/login";
+    loginUrl.search = "";
+    const redirectResponse = NextResponse.redirect(loginUrl);
+    response.headers.getSetCookie().forEach((cookie) => {
+      redirectResponse.headers.append("Set-Cookie", cookie);
+    });
+    redirectResponse.headers.set("Cache-Control", "private, no-store, max-age=0");
+    return redirectResponse;
   }
 
   response.headers.set("Cache-Control", "private, no-store, max-age=0");
@@ -26,5 +45,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/login/:path*", "/student/:path*", "/teacher/:path*", "/staff/:path*", "/admin/:path*", "/api/:path*"],
+  matcher: ["/((?!_next/static|_next/image|.*\\..*).*)"],
 };

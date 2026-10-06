@@ -146,5 +146,5 @@ export async function updatePassword(_state: LoginState, formData: FormData): Pr
 export async function logout() {
   const supabase = await createClient();
   await supabase.auth.signOut();
-  redirect("/");
+  redirect("/login");
 }

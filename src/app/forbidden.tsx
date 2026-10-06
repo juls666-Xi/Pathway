@@ -8,7 +8,7 @@ export default function Forbidden() {
       <p className="eyebrow">HTTP 403</p>
       <h1>Access denied</h1>
       <p>Your account is not authorized to view this page.</p>
-      <Link href="/">Return to the public homepage</Link>
+      <Link href="/login">Return to sign in</Link>
     </main>
   );
 }
